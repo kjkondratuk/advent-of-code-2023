@@ -79,35 +79,9 @@ fn process(input: Vec<&str>) -> Result<i32, ParseIntError> {
             (_, _) => {
                 // println!("line: {} - first: {} - last: {}", l, first, last);
 
-                if !first.parse::<i32>().is_ok() {
-                    first = match first {
-                        "one" => "1",
-                        "two" => "2",
-                        "three" => "3",
-                        "four" => "4",
-                        "five" => "5",
-                        "six" => "6",
-                        "seven" => "7",
-                        "eight" => "8",
-                        "nine" => "9",
-                        v => panic!("invalid number expression: {}", v),
-                    };
-                }
+                first = parse_if_numeric(&mut first);
 
-                if !last.parse::<i32>().is_ok() {
-                    last = match last {
-                        "one" => "1",
-                        "two" => "2",
-                        "three" => "3",
-                        "four" => "4",
-                        "five" => "5",
-                        "six" => "6",
-                        "seven" => "7",
-                        "eight" => "8",
-                        "nine" => "9",
-                        v => panic!("invalid number expression: {}", v),
-                    };
-                }
+                last = parse_if_numeric(&mut last);
 
                 let concat = format!("{}{}", first, last);
                 let nbr_result: Result<i32, _> = concat.parse();
@@ -125,4 +99,23 @@ fn process(input: Vec<&str>) -> Result<i32, ParseIntError> {
     }
 
     Ok(acc)
+}
+
+fn parse_if_numeric(nbrstr: &str) -> &str {
+    if !nbrstr.parse::<i32>().is_ok() {
+        let result = match nbrstr {
+            "one" => "1",
+            "two" => "2",
+            "three" => "3",
+            "four" => "4",
+            "five" => "5",
+            "six" => "6",
+            "seven" => "7",
+            "eight" => "8",
+            "nine" => "9",
+            v => panic!("invalid number expression: {}", v),
+        };
+        return result
+    }
+    return nbrstr
 }
