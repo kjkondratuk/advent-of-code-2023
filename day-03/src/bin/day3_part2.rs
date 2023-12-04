@@ -52,7 +52,6 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Block>, ParsingError> {
                 block_range = start - 1..start + len + 1;
             }
 
-            // TODO : have to add some logic to size the bounding box so we don't truncate numbers surrounding the asterisk
             let curr_block =
                 String::from(&curr_line.to_string().as_str()[block_range.clone()]);
             let mut prev_block = "".to_string();
@@ -67,6 +66,7 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Block>, ParsingError> {
             let starts_with_number = Regex::new("^[0-9]+").unwrap();
             let ends_with_number = Regex::new("[0-9]+$").unwrap();
 
+            // grow the bounding boxes to include all of numbers we truncated
             let new_blocks: Vec<String> = vec![(prev_block.to_string(), &prev_line), (curr_block.to_string(), &curr_line.to_string()), (next_block.to_string(), &next_line)].iter().map(|(b, l)| {
                 let mut result = b.clone();
                 // if b == "6.2" {
