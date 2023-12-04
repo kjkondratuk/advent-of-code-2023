@@ -1,7 +1,9 @@
+use std::collections::HashMap;
 use helpers::lines;
 use regex::Regex;
 use std::fmt;
-use std::fmt::Formatter;
+use std::fmt::{format, Formatter};
+use std::hash::Hash;
 use std::ops::Range;
 
 fn main() {
@@ -22,7 +24,7 @@ fn main() {
 enum ParsingError {}
 
 fn parse(lines: Vec<&str>) -> Result<Vec<Block>, ParsingError> {
-    let number_pattern: Regex = Regex::new(r"\*").unwrap();
+    let number_pattern: Regex = Regex::new(r"\d+").unwrap();
 
     let mut blocks: Vec<Block> = vec![];
     let mut prev_line = "".to_string();
@@ -38,6 +40,7 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Block>, ParsingError> {
             let value = cap.get(0).unwrap();
             let start = value.start();
             let len = value.len();
+            let mut local_coord;
 
             // println!("setting block range: start: {}, len: {}", start, len);
             let block_range: Range<usize>;
@@ -52,7 +55,6 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Block>, ParsingError> {
                 block_range = start - 1..start + len + 1;
             }
 
-            // TODO : have to add some logic to size the bounding box so we don't truncate numbers surrounding the asterisk
             let curr_block =
                 String::from(&lines.get(i).unwrap().to_string().as_str()[block_range.clone()]);
             let mut prev_block = "".to_string();
@@ -64,15 +66,32 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Block>, ParsingError> {
                 next_block = String::from(&next_line.as_str()[block_range.clone()]);
             }
 
-            // let nbr = String::from(&lines.get(i).unwrap().to_string().as_str()[start..start + len])
-            //     .parse::<i32>()
-            //     .unwrap();
+            if prev_line.len() == 0  {
+                local_coord = (0, start - block_range.start)
+            } else {
+                local_coord = (1, start - block_range.start)
+            }
+
+            let nbr = String::from(&lines.get(i).unwrap().to_string().as_str()[start..start + len])
+                .parse::<i32>()
+                .unwrap();
+
+            let mut data;
+            if prev_block.len() == 0 {
+                data = vec![curr_block, next_block]
+            } else if next_block.len() == 0 {
+                data = vec![prev_block, curr_block]
+            } else {
+                data = vec![prev_block, curr_block, next_block]
+            }
 
             let b = Block {
-                number: 0,
+                coord: (i, start),
+                local: local_coord,
+                number: nbr,
                 start,
                 len,
-                data: vec![prev_block, curr_block, next_block],
+                data,
             };
 
             // println!("line: {}, number: {}, start: {}, len: {}, has_symbol: {}, data: {:?}", i, b.number, b.start, b.len, b.contains_symbol(), b.data);
@@ -86,32 +105,67 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Block>, ParsingError> {
 }
 
 fn process(blocks: Vec<Block>) -> i32 {
-    let b = blocks.iter().filter(|&b| b.numbers().len() == 2).collect::<Vec<&Block>>();;
+    let mut counts: HashMap<String, i32> = HashMap::new();
+    blocks.iter().for_each(|b| {
+        b.asterisk_coords().iter().for_each(|coord_set: &Vec<(usize, usize)>| {
+            coord_set.iter().for_each(|coord| {
+                // TODO : coordinates are getting incorrect somewhere here
+                counts.entry(format!("{},{}", coord.0, coord.1))
+                    .and_modify(|v| *v = *v + 1)
+                    .or_insert(0);
+            });
+        });
+        return
+    });
 
-    for x in &b {
-        println!("data: {}, numbers: {:?}, gear_ratio: {}", x.data.concat(), x.numbers(), x.numbers().get(0).unwrap() * x.numbers().get(1).unwrap());
+    for (k, v) in counts {
+        println!("{}: {}", k, v);
     }
 
-    b.iter().map(|b| b.numbers().get(0).unwrap() * b.numbers().get(1).unwrap()).sum()
+    0
 }
 
 struct Block {
+    // coord : the coordinate of the starting position of the number
+    coord: (usize, usize),
+    // local : the offset from the upper left of the bounding box
+    local: (usize, usize),
+    // number : the number in the block
     number: i32,
+    // start : the start position of the number on the line
     start: usize,
+    // len : the length of the number
     len: usize,
+    // data : the raw data block the number is contained in, with a bounding box
     data: Vec<String>,
 }
 
 impl Block {
-    fn numbers(&self) -> Vec<i32> {
-        let mut nbr_strs: Vec<i32> = vec![];
-        for row in &self.data {
-            for mtc in Regex::new(r"[0-9]+").unwrap().find_iter(row.as_str()) {
-                nbr_strs.push(mtc.as_str().parse::<i32>().unwrap())
+    fn contains_symbol(&self) -> bool {
+        self.data.iter().any(|d| {
+            Regex::new(r"[^.A-Za-z0-9\n]")
+                .unwrap()
+                .find_iter(d)
+                .next()
+                .is_some()
+        })
+    }
+
+    fn asterisk_coords(&self) -> Option<Vec<(usize, usize)>> {
+        let mut data_coords: Vec<(usize, usize)> = vec![];
+        for (i, d) in self.data.iter().enumerate() {
+            for (n, c) in d.chars().enumerate() {
+                if c == '*' {
+                    data_coords.push((self.coord.0 - self.local.0 + i, self.coord.1 - self.local.1 + n + 1));
+                }
             }
         }
 
-        return nbr_strs
+        if data_coords.len() > 0 {
+            Some(data_coords)
+        } else {
+            None
+        }
     }
 }
 
