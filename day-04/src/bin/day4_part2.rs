@@ -22,6 +22,7 @@ struct Card {
     id: i32,
     winning_numbers: Vec<i32>,
     card_numbers: Vec<i32>,
+    copies: i32,
 }
 
 impl fmt::Display for Card {
@@ -85,35 +86,48 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Card>, ParseError> {
             id: game_id,
             winning_numbers,
             card_numbers,
+            copies: 1,
         })
     }
 
     Ok(games)
 }
 
-fn process(data: Vec<Card>) -> i32 {
+fn process(mut data: Vec<Card>) -> i32 {
     let mut acc = 0;
+    let data_clone = data.clone();
 
     // Make a COPY of ALL OUR FUCKING DATA because the rust compiler is a grumpy old man.
-    for card in data.clone().into_iter() {
-        // println!("incrementing card counter: {}", card_count);
-        let mut score = 0;
+    for (idx, card) in data_clone.iter().enumerate() {
         let winner_ct = card.card_numbers
             .iter()
             .filter(|c| card.winning_numbers.iter().find(|c1| c == c1).is_some())
             .count();
 
-        if winner_ct == 1 {
-            // println!("adding points: {}", 1);
-            score = score + 1;
-        }
-        if winner_ct > 1 {
-            // println!("adding points: {}", 2_i32.pow((winner_ct - 1) as u32));
-            score = 2_i32.pow((winner_ct - 1) as u32);
-        }
-
-        acc = acc + score;
+        increment_winner_copies(idx, &mut data, winner_ct);
     }
 
     acc
+}
+
+fn increment_winner_copies(idx: usize, cards: &mut Vec<Card>, next_x: usize) -> () {
+    let mut loop_ct = 0;
+    let clone_cards = cards.clone();
+    for c in &mut cards[idx+1..idx+next_x] {
+        let mut new_c = c.clone();
+        new_c.copies += 1;
+        *c = new_c;
+        if idx + next_x < clone_cards.len() {
+            // let winning_nbr = c.winning_numbers.clone();
+            // let winner_ct = c.card_numbers
+            //     .iter()
+            //     .filter(|c| c.winning_numbers.iter().find(|c1| c == c1).is_some())
+            //     .count();
+
+            loop_ct += 1;
+            increment_winner_copies(idx+loop_ct, cards, 0/*winner_ct*/);
+        } else {
+            return
+        }
+    }
 }
