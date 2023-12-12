@@ -1,7 +1,9 @@
-use std::fmt;
-use std::fmt::Formatter;
 use helpers::lines;
 use std::string::ParseError;
+use card_list::Card;
+use crate::card_list::CardList;
+
+mod card_list;
 
 fn main() {
     let input = include_str!("input.txt");
@@ -15,25 +17,6 @@ fn main() {
         }
     };
     println!("{}", v)
-}
-
-#[derive(Clone)]
-struct Card {
-    id: i32,
-    winning_numbers: Vec<i32>,
-    card_numbers: Vec<i32>,
-    copies: i32,
-}
-
-impl fmt::Display for Card {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Card: id: {}, winning_numbers: {:?}, card_numbers: {:?}",
-            self.id, self.winning_numbers, self.card_numbers
-        )?;
-        write!(f, "")
-    }
 }
 
 fn parse(lines: Vec<&str>) -> Result<Vec<Card>, ParseError> {
@@ -82,52 +65,52 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Card>, ParseError> {
         //     "{:?}, winning_numbers: {:?}, card_numbers: {:?}",
         //     game_id, winning_numbers, card_numbers
         // );
-        games.push(Card {
-            id: game_id,
+        games.push(Card::new(
+            game_id,
             winning_numbers,
             card_numbers,
-            copies: 1,
-        })
+            1,
+        ))
     }
 
     Ok(games)
 }
 
-fn process(mut data: Vec<Card>) -> i32 {
-    let mut acc = 0;
+fn process(data: Vec<Card>) -> i32 {
+    let acc = 0;
     let data_clone = data.clone();
 
+    let _cl = CardList::new(data);
+
     // Make a COPY of ALL OUR FUCKING DATA because the rust compiler is a grumpy old man.
-    for (idx, card) in data_clone.iter().enumerate() {
-        let winner_ct = card.card_numbers
+    for (_idx, card) in data_clone.iter().enumerate() {
+        let _winner_ct = card.card_numbers()
             .iter()
-            .filter(|c| card.winning_numbers.iter().find(|c1| c == c1).is_some())
+            .filter(|c| card.winning_numbers().iter().find(|c1| c == c1).is_some())
             .count();
 
-        increment_winner_copies(idx, &mut data, winner_ct);
+        // increment_winner_copies(idx, data.clone().as_mut(), winner_ct);
     }
 
     acc
 }
 
-fn increment_winner_copies(idx: usize, cards: &mut Vec<Card>, next_x: usize) -> () {
-    let mut loop_ct = 0;
-    let clone_cards = cards.clone();
-    for c in &mut cards[idx+1..idx+next_x] {
-        let mut new_c = c.clone();
-        new_c.copies += 1;
-        *c = new_c;
-        if idx + next_x < clone_cards.len() {
-            // let winning_nbr = c.winning_numbers.clone();
-            // let winner_ct = c.card_numbers
-            //     .iter()
-            //     .filter(|c| c.winning_numbers.iter().find(|c1| c == c1).is_some())
-            //     .count();
-
-            loop_ct += 1;
-            increment_winner_copies(idx+loop_ct, cards, 0/*winner_ct*/);
-        } else {
-            return
-        }
-    }
-}
+// fn increment_winner_copies(idx: usize, l: usize, cards: &mut Vec<Card>, next_x: usize) -> &mut Vec<Card> {
+//     let mut loop_ct = 0;
+//     for c in &mut cards[idx+1..idx+next_x] {
+//         let mut new_c = c.clone();
+//         new_c.copies += 1;
+//         *c = new_c;
+//         if idx + next_x < l {
+//             // let winning_nbr = c.winning_numbers.clone();
+//             // let winner_ct = c.card_numbers
+//             //     .iter()
+//             //     .filter(|c| c.winning_numbers.iter().find(|c1| c == c1).is_some())
+//             //     .count();
+//
+//             loop_ct += 1;
+//             increment_winner_copies(idx+loop_ct, l, cards.clone().as_mut(), 0/*winner_ct*/);
+//         }
+//     }
+//     cards
+// }
