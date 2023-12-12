@@ -103,16 +103,16 @@ fn process(data: Vec<Card>) -> i32 {
             .filter(|c| card.winning_numbers.iter().find(|c1| c == c1).is_some())
             .count();
 
-        if winner_ct == 1 {
-            // println!("adding points: {}", 1);
-            score = score + 1;
-        }
-        if winner_ct > 1 {
-            // println!("adding points: {}", 2_i32.pow((winner_ct - 1) as u32));
-            score = 2_i32.pow((winner_ct - 1) as u32);
-        }
+            if winner_ct == 1 {
+                // println!("adding points: {}", 1);
+                score = score + 1;
+            }
+            if winner_ct > 1 {
+                // println!("adding points: {}", 2_i32.pow((winner_ct - 1) as u32));
+                score = 2_i32.pow((winner_ct - 1) as u32);
+            }
 
-        acc = acc + score;
+            acc = acc + score;
     }
 
     acc

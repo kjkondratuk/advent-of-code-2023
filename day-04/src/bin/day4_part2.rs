@@ -77,22 +77,39 @@ fn parse(lines: Vec<&str>) -> Result<Vec<Card>, ParseError> {
 }
 
 fn process(data: Vec<Card>) -> i32 {
-    let acc = 0;
+    let mut cc = 0;
+    let mut acc = 0;
     let data_clone = data.clone();
 
-    let _cl = CardList::new(data);
+    let mut cl = CardList::new(data);
 
     // Make a COPY of ALL OUR FUCKING DATA because the rust compiler is a grumpy old man.
-    for (_idx, card) in data_clone.iter().enumerate() {
-        let _winner_ct = card.card_numbers()
-            .iter()
-            .filter(|c| card.winning_numbers().iter().find(|c1| c == c1).is_some())
-            .count();
+    for (idx, card) in data_clone.iter().enumerate() {
+        let mut score = 0;
+        let winner_ct = card.winner_ct();
 
+        cl.increment_winner_copies(idx);
         // increment_winner_copies(idx, data.clone().as_mut(), winner_ct);
+
+        if winner_ct == 1 {
+            // println!("adding points: {}", 1);
+            score = score + 1;
+        }
+        if winner_ct > 1 {
+            // println!("adding points: {}", 2_i32.pow((winner_ct - 1) as u32));
+            score = 2_i32.pow((winner_ct - 1) as u32);
+        }
+
+        acc = acc + score;
     }
 
-    acc
+    for c in cl.get().iter() {
+        println!("{} has {} copies", c.id(), c.copies());
+        cc += c.copies();
+    }
+
+    // acc
+    cc
 }
 
 // fn increment_winner_copies(idx: usize, l: usize, cards: &mut Vec<Card>, next_x: usize) -> &mut Vec<Card> {
