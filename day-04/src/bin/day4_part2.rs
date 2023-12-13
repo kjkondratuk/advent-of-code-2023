@@ -1,9 +1,7 @@
 use helpers::lines;
 use std::string::ParseError;
-use card_list::Card;
-use crate::card_list::CardList;
+use day_04::card_list::{Card, CardList};
 
-mod card_list;
 
 fn main() {
     let input = include_str!("input.txt");
