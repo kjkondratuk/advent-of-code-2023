@@ -1,7 +1,6 @@
 use day_05::almanac::{Almanac, AlmanacMapping, MappingKey};
 use helpers::lines;
 use std::collections::HashMap;
-use std::ops::Deref;
 
 fn main() {
     let input = include_str!("part_1.txt");
@@ -65,15 +64,17 @@ fn parse(lines: Vec<&str>) -> Almanac {
             .get(0)
             .unwrap()
             .replace("-to-", "-");
-        let split_line = modified_line.split("-");
-        let modified_vec = split_line.collect::<Vec<&str>>();
+            let parts = modified_line.split("-")
+            .collect::<Vec<&str>>();
+        // let split_line = modified_line.split("-");
+        // let modified_vec = split_line.collect::<Vec<&str>>();
         line_counter += 1;
 
         // println!("processing group: {} at line {} - {}", group_counter, line_counter, modified_line);
         // TODO : there is an issue here with referencing modified_vec with dereferencing
         let type_mapping = (
-            modified_vec.get(0).unwrap().deref(),
-            modified_vec.get(1).unwrap().deref(),
+            parts.get(0).unwrap(),
+            parts.get(1).unwrap(),
         );
 
         let mut value_mapping: Vec<AlmanacMapping> = vec![];
