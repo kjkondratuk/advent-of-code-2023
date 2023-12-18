@@ -1,12 +1,15 @@
 use day_05::almanac::{Almanac, AlmanacMapping, MappingKey};
 use helpers::lines;
 use std::collections::HashMap;
+use std::ops::Deref;
+use day_05::almanac;
 
 fn main() {
     let input = include_str!("part_1.txt");
     let lines = lines(input);
     let parse_result = parse(lines);
-    let process_result = process(parse_result);
+    let almanac = Almanac::new(parse_result.0, parse_result.1);
+    let process_result = process(almanac);
     // let v = match parse_result {
     //     Ok(r) => process(r),
     //     Err(err) => {
@@ -18,11 +21,11 @@ fn main() {
 }
 
 fn process(island_almanac: Almanac) -> i32 {
-    let _ = island_almanac.get_seeds().iter().filter(|&seed| {
+    let location = island_almanac.get_seeds().iter().filter(|&seed| {
         let mappings = island_almanac
             .get_mappings();
         let in_range = mappings
-            .get(&(Almanac::SEED, Almanac::SOIL))
+            .get(&MappingKey { from: almanac::SEED.to_string(), to: almanac::SOIL.to_string() })
             .unwrap()
             .iter()
             .filter(|&m| m.in_source_range(*seed))
@@ -35,7 +38,7 @@ fn process(island_almanac: Almanac) -> i32 {
     0
 }
 
-fn parse(lines: Vec<&str>) -> Almanac {
+fn parse(lines: Vec<&str>) -> (Vec<i64>, HashMap<MappingKey, Vec<AlmanacMapping>>) {
     // parse the first line into a Vec<String>
     let seeds = lines
         .get(0)
@@ -47,9 +50,9 @@ fn parse(lines: Vec<&str>) -> Almanac {
         .collect::<Vec<i64>>();
 
     // trim first 2 lines because they're formatted differently
-    let mut remaining_lines = lines[2..].iter().map(|&s| s).collect::<Vec<&str>>();
+    let mut remaining_lines = lines[2..].iter().map(|&s| String::from(s)).collect::<Vec<String>>();
 
-    let mut mapping: HashMap<(MappingKey, MappingKey), Vec<AlmanacMapping>> = HashMap::new();
+    let mut mapping: HashMap<MappingKey, Vec<AlmanacMapping>> = HashMap::new();
     let mut line_counter = 0;
     let mut group_counter = 0;
     while remaining_lines.len() > 0 {
@@ -58,24 +61,36 @@ fn parse(lines: Vec<&str>) -> Almanac {
         if remaining_lines[0].to_string() == "" {
             remaining_lines = remaining_lines[1..remaining_lines.len()].to_vec();
         }
-        let modified_line = remaining_lines[0]
+
+        let tokenized_line = remaining_lines[0]
             .split_whitespace()
-            .collect::<Vec<&str>>()
-            .get(0)
-            .unwrap()
-            .replace("-to-", "-");
-            let parts = modified_line.split("-")
-            .collect::<Vec<&str>>();
+            .map(String::from)
+            .collect::<Vec<String>>();
+
+        let modified_line = tokenized_line.get(0).unwrap();
+
+        let replaced_line = modified_line.replace("-to-", "-");
+
+        // let parts = replaced_line.split("-")
+        //     .collect::<Vec<&str>>();
         // let split_line = modified_line.split("-");
         // let modified_vec = split_line.collect::<Vec<&str>>();
         line_counter += 1;
 
         // println!("processing group: {} at line {} - {}", group_counter, line_counter, modified_line);
         // TODO : there is an issue here with referencing modified_vec with dereferencing
-        let type_mapping = (
-            parts.get(0).unwrap(),
-            parts.get(1).unwrap(),
-        );
+        let type_mapping = replaced_line.split("-").collect::<Vec<&str>>().chunks(2).map(|chunk| {
+            let mut iter = chunk.iter();
+            let first = iter.next().unwrap().to_string();
+            let second = iter.next().unwrap().to_string();
+
+            // println!("adding mapping: {} - {}", first, second);
+
+            MappingKey {
+                from: first,
+                to: second,
+            }
+        }).collect::<Vec<MappingKey>>();
 
         let mut value_mapping: Vec<AlmanacMapping> = vec![];
         // println!("iterating over mapping range: {} - {}", line_counter, remaining_lines.len());
@@ -94,9 +109,10 @@ fn parse(lines: Vec<&str>) -> Almanac {
             line_counter += 1;
         }
 
-        mapping.insert(type_mapping.clone(), value_mapping.clone());
+        let tm = type_mapping.get(0).unwrap().clone();
+        mapping.insert(tm, value_mapping.clone());
 
-        // println!("inserted {} mappings to {} - {}", value_mapping.len(), type_mapping.0, type_mapping.1);
+        // println!("inserted {} mappings to {} {}", value_mapping.len(), type_mapping.get(0).unwrap().from, type_mapping.get(0).unwrap().to);
 
         // eat up the buffer that's been processed
         // println!("reslicing to range: {} - {}", line_counter, remaining_lines.len());
@@ -106,5 +122,5 @@ fn parse(lines: Vec<&str>) -> Almanac {
         line_counter = 0;
     }
 
-    Almanac::new(seeds, mapping)
+    (seeds, mapping)
 }

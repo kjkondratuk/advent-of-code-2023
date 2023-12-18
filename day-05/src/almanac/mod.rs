@@ -3,21 +3,26 @@ use std::collections::HashMap;
 #[derive(Default)]
 pub struct Almanac {
     seeds: Vec<i64>,
-    mappings: HashMap<(MappingKey, MappingKey), Vec<AlmanacMapping>>,
+    mappings: HashMap<MappingKey, Vec<AlmanacMapping>>,
 }
 
-pub type MappingKey = &'static str;
+#[derive(Clone, Eq, PartialEq, Hash)]
+pub struct MappingKey {
+    pub from: String,
+    pub to: String,
+}
+
+pub static SEED: &str = &"seed";
+pub static SOIL: &str = &"soil";
+pub static FERTILIZER: &str = &"fertilizer";
+pub static WATER: &str = &"water";
+pub static LIGHT: &str = &"light";
+pub static TEMPERATURE: &str = &"temperature";
+pub static HUMIDITY: &str = &"humidity";
+pub static LOCATION: &str = &"location";
 
 impl Almanac {
-    pub const SEED: &'static MappingKey = &"seed";
-    pub const SOIL: &'static MappingKey = &"soil";
-    pub const FERTILIZER: &'static MappingKey = &"fertilizer";
-    pub const WATER: &'static MappingKey = &"water";
-    pub const LIGHT: &'static MappingKey = &"light";
-    pub const TEMPERATURE: &'static MappingKey = &"temperature";
-    pub const HUMIDITY: &'static MappingKey = &"humidity";
-    pub const LOCATION: &'static MappingKey = &"location";
-    pub fn new(seeds: Vec<i64>, mappings: HashMap<(MappingKey, MappingKey), Vec<AlmanacMapping>>) -> Almanac {
+    pub fn new(seeds: Vec<i64>, mappings: HashMap<MappingKey, Vec<AlmanacMapping>>) -> Almanac {
         Almanac{
             seeds,
             mappings,
@@ -28,7 +33,7 @@ impl Almanac {
         self.seeds.clone()
     }
 
-    pub fn get_mappings(&self) -> HashMap<(MappingKey, MappingKey), Vec<AlmanacMapping>> {
+    pub fn get_mappings(&self) -> HashMap<MappingKey, Vec<AlmanacMapping>> {
         self.mappings.clone()
     }
 }
@@ -50,7 +55,9 @@ impl AlmanacMapping {
     }
 
     pub fn in_source_range(&self, nbr: i64) -> bool {
-        nbr >= self.dest_start && nbr <= self.dest_start+self.length
+        let result = nbr >= self.dest_start && nbr <= self.dest_start+self.length;
+        println!("Checking source range: {} to {} - {} - {}", self.dest_start, self.dest_start+self.length, result, nbr);
+        result
     }
 
     pub fn in_dest_range(&self, nbr: i64) -> bool {
